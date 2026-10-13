@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>India Jobs · Lead Finder</title>
+<style>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #fff; --ink: #16181d; --muted: #6b7280; --line: #e5e7eb;
+  --accent: #2563eb; --soft: #eef2ff; --ok: #059669; --bad: #dc2626;
+  --reddit: #ff4500; --x: #111; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1115; --panel: #171a21; --ink: #e8eaed; --muted: #9aa0aa; --line: #2a2f39;
+    --accent: #5b8cff; --soft: #1e2638; --x: #e8eaed; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  background: var(--bg); color: var(--ink); }
+.wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 60px; }
+header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+header h1 { font-size: 22px; margin: 0; letter-spacing: -.02em; }
+.stats { color: var(--muted); font-size: 14px; }
+.stats b { color: var(--ink); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+.step { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 10px; }
+.step + .step, .block + .step { margin-top: 22px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; pointer-events: none; }
+.chip span { display: inline-block; padding: 8px 14px; border: 1px solid var(--line); border-radius: 99px;
+  cursor: pointer; user-select: none; font-weight: 500; }
+.chip input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip input:disabled + span { opacity: .4; cursor: default; }
+input[type=text], input[type=search], input[type=number], select {
+  font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 9px; padding: 8px 11px; }
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.full { width: 100%; }
+.platforms { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.platform { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 10px; cursor: pointer; }
+.platform:has(input:checked) { border-color: var(--accent); background: var(--soft); }
+.platform small { display: block; color: var(--muted); }
+.platform.off { opacity: .5; cursor: default; }
+details.more { margin-top: 14px; }
+details.more summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+details.more .platforms { margin-top: 10px; }
+.go { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 22px; }
+button { font: inherit; font-weight: 600; border: 1px solid var(--line); background: var(--panel);
+  color: var(--ink); border-radius: 9px; padding: 8px 14px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); padding: 11px 22px; font-size: 16px; }
+button.small { padding: 5px 10px; font-size: 13px; }
+button:disabled { opacity: .5; cursor: default; }
+.muted { color: var(--muted); font-size: 14px; }
+.run { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.run:first-child { border-top: 0; }
+.run .info { flex: 1; min-width: 0; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.bar i { display: block; height: 100%; background: var(--accent); transition: width .4s; }
+.state { font-size: 12px; font-weight: 700; }
+.state.done { color: var(--ok); } .state.running, .state.queued { color: var(--accent); }
+.state.failed, .state.cancelled, .state.interrupted { color: var(--bad); }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.tab { border: 0; background: none; border-radius: 0; padding: 8px 12px; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.on { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .n { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.filters input[type=search] { flex: 1 1 200px; }
+.lead { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+.lead:first-child { border-top: 0; }
+.lead .who { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.tag { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 99px; color: #fff; background: var(--muted); }
+.tag.reddit { background: var(--reddit); }
+.tag.x { background: var(--x); color: var(--panel); }
+.tag.li { background: #0a66c2; }
+.lead h3 { font-size: 15.5px; margin: 2px 0; font-weight: 600; }
+.lead p { margin: 0; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden; }
+.lead .actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 130px; }
+.lead .actions a { text-align: center; font-weight: 600; font-size: 13px; text-decoration: none; color: var(--accent);
+  border: 1px solid var(--line); border-radius: 9px; padding: 5px 10px; }
+.lead .actions a:hover { border-color: var(--accent); }
+.lead .actions select { font-size: 13px; padding: 5px 8px; }
+.lead .email a { color: var(--accent); }
+.badge { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: #dcfce7; color: #166534; }
+@media (prefers-color-scheme: dark) { .badge { background: #14532d; color: #bbf7d0; } }
+@media (max-width: 600px) { .lead { grid-template-columns: 1fr; } .lead .actions { flex-direction: row; flex-wrap: wrap; } }
+.pager { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.empty { padding: 30px; text-align: center; color: var(--muted); }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg);
+  padding: 10px 16px; border-radius: 9px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+/* India page additions */
+header nav { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+header nav a { color: var(--accent); font-weight: 600; font-size: 14px; text-decoration: none; }
+.group { font-size: 12px; font-weight: 700; color: var(--muted); margin: 0 0 6px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.opts { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+.tag.naukri { background: #4a6ee0; }
+.tag.wellfound { background: #111; }
+.tag.yc { background: #f26522; }
+.tag.news { background: #0f766e; }
+.people { font-size: 13px; color: var(--muted); margin-top: 4px; white-space: pre-line; }
+@media (prefers-color-scheme: dark) { .tag.wellfound { background: #e8eaed; color: #111; } }
+.lead .actions button { font-size: 13px; padding: 5px 10px; color: var(--accent); }
+.city { font-weight: 600; }
+.chips + .step, .cols + .step, .opts + .step { margin-top: 22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Lead Finder · India jobs</h1>
+    <nav><span class="stats" id="stats"></span><a href="/">← Freelance leads</a></nav>
+  </header>
+
+  <!-- 1. Search -->
+  <form class="card" id="searchForm">
+    <p class="step">1 · What role?</p>
+    <div class="chips" id="roles"></div>
+    <div class="block" style="margin-top:10px">
+      <input type="text" class="full" name="custom" placeholder="Anything else? e.g. Golang, QA automation, product designer (separate with commas)">
+    </div>
+
+    <p class="step">2 · Which cities?</p>
+    <div class="chips" id="cities"></div>
+
+    <p class="step">3 · Where to look</p>
+    <div class="cols">
+      <div><p class="group">JOBS</p><div class="platforms" id="grp_job"></div></div>
+      <div><p class="group">CLIENT POSTS — PEOPLE WHO NEED A DEVELOPER</p><div class="platforms" id="grp_hiring"></div></div>
+    </div>
+    <div class="cols" style="margin-top:14px">
+      <div><p class="group">STARTUPS HIRING</p><div class="platforms" id="grp_company"></div></div>
+      <div><p class="group">STARTUPS THAT RAISED MONEY</p><div class="platforms" id="grp_funded"></div></div>
+    </div>
+    <div class="opts muted">
+      <label>Jobs &amp; posts from the last
+        <select name="days"><option value="1">24 hours</option><option value="3">3 days</option>
+          <option value="7" selected>7 days</option><option value="30">30 days</option></select></label>
+      <label>Up to
+        <select name="per"><option>10</option><option selected>25</option><option>50</option></select>
+        results per city and site</label>
+    </div>
+
+    <p class="step">4 · Name it</p>
+    <input type="text" class="full" name="campaign" id="campaignName">
+
+    <div class="go">
+      <button class="primary" type="submit">Find jobs &amp; startups</button>
+      <span class="muted" id="estimate"></span>
+    </div>
+  </form>
+
+  <!-- Running searches -->
+  <div class="card" id="runsCard" hidden>
+    <p class="step">Searches running</p>
+    <div id="runs"></div>
+  </div>
+
+  <!-- 2. Results -->
+  <div class="card">
+    <div class="tabs" id="tabs"></div>
+    <div class="filters">
+      <input type="search" id="q" placeholder="Search titles, companies, skills…">
+      <select id="fCity" aria-label="City"><option value="">All cities</option></select>
+      <select id="fSite" aria-label="Site"></select>
+      <select id="fStatus" aria-label="Status"><option value="">Any status</option></select>
+      <select id="fWithin" aria-label="Posted within">
+        <option value="1">Last 24 hours</option><option value="3">Last 3 days</option>
+        <option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option>
+        <option value="">Any time</option>
+      </select>
+      <select id="fCampaign" aria-label="Search"><option value="">All searches</option></select>
+      <button id="enrichBtn" type="button">Find emails</button>
+      <button id="exportBtn" type="button">Export CSV</button>
+    </div>
+    <div id="leads"></div>
+    <div class="pager" id="pager"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const ROLES = ["React", "Node.js", "Python", "Java", "Full stack", "Frontend", "Backend", "Flutter", "DevOps", "Data / AI"];
+const DEFAULT_ROLES = ["React", "Node.js", "Python"];
+const CITIES = ["Chennai", "Noida", "Gurugram"];
+const SITES = {
+  india_naukri: { name: "Naukri", desc: "India's biggest job board, no login", tag: "naukri", kind: "job", mode: "roles" },
+  india_linkedin: { name: "LinkedIn jobs", desc: "Public job listings, no login", tag: "li", kind: "job", mode: "roles" },
+  india_yc_jobs: { name: "Y Combinator jobs", desc: "Roles at YC startups, with salary (no Chennai page)", tag: "yc", kind: "job", mode: "city" },
+  india_x: { name: "X / Twitter", desc: "\u201cNeed a developer / website / app\u201d tweets naming the city", tag: "x", kind: "hiring", mode: "city" },
+  india_reddit: { name: "Reddit", desc: "Requests in city subs + r/developersIndia, r/IndianStartups", tag: "reddit", kind: "hiring", mode: "city" },
+  india_li_posts: { name: "LinkedIn posts", desc: "\u201cLooking for a developer\u201d posts \u2014 needs LinkedIn login in Chrome", tag: "li", kind: "hiring", mode: "city", off: true },
+  india_wellfound: { name: "Wellfound", desc: "Startups with open roles, size & website", tag: "wellfound", kind: "company", mode: "city" },
+  india_yc: { name: "Y Combinator", desc: "YC startups hiring (no Chennai page)", tag: "yc", kind: "company", mode: "city" },
+  india_funding: { name: "Funding news", desc: "Raised money in the last 30 days \u2014 then finds website & founders", tag: "news", kind: "funded", mode: "funding" },
+};
+const GROUPS = ["job", "hiring", "company", "funded"];
+const ofKind = (kind) => Object.keys(SITES).filter((k) => SITES[k].kind === kind);
+// Older leads from the main page's combined India sources still show up here.
+const LEGACY = { india_jobs: "job", india_startups: "company" };
+const STATUSES = ["new", "contacted", "replied", "qualified", "won", "rejected"];
+const TABS = [["job", "Jobs"], ["hiring", "Client posts"], ["company", "Startups"], ["funded", "Funded"]];
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const state = { tab: "job", page: 1, perPage: 50, sources: {} };
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2800);
+}
+async function api(path, opts = {}) {
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+const qs = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v !== "" && v != null)).toString();
+const ago = (d) => {
+  const t = new Date(d); if (isNaN(t)) return "";
+  const h = (Date.now() - t) / 36e5;
+  return h < 1 ? "just now" : h < 24 ? `${Math.round(h)}h ago` : `${Math.round(h / 24)}d ago`;
+};
+const today = () => new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" });
+// "INR 2750000.0–4250000.0" -> "₹27.5L–42.5L"
+const lakh = (v) => `${+(v / 1e5).toFixed(1)}L`;
+function pay(b) {
+  const m = String(b || "").match(/^([A-Z]{3})\s+([\d.]+)\D+([\d.]+)$/);
+  if (!m) return b || "";
+  const [, cur, lo, hi] = m;
+  return cur === "INR" ? `₹${lakh(+lo)}–${lakh(+hi)}` : `${cur} ${(+lo).toLocaleString()}–${(+hi).toLocaleString()}`;
+}
+const cityOf = (l) => (l.signal.match(/\bin (Chennai|Noida|Gurugram)\b/) || [])[1] || (CITIES.includes(l.location) ? l.location : "");
+const tabSources = (tab) => [...Object.keys(SITES).filter((k) => SITES[k].kind === tab),
+  ...Object.keys(LEGACY).filter((k) => LEGACY[k] === tab)];
+
+// ---------- search form
+const chip = (name, v, on) =>
+  `<label class="chip"><input type="checkbox" name="${name}" value="${v}" ${on ? "checked" : ""}><span>${v}</span></label>`;
+$("#roles").innerHTML = ROLES.map((r) => chip("role", r, DEFAULT_ROLES.includes(r))).join("");
+$("#cities").innerHTML = CITIES.map((c) => chip("city", c, true)).join("");
+$("#fCity").innerHTML += CITIES.map((c) => `<option>${c}</option>`).join("");
+$("#fStatus").innerHTML += STATUSES.map((s) => `<option>${s}</option>`).join("");
+$("#campaignName").value = `India ${today()}`;
+
+function siteBox(key) {
+  const s = state.sources[key] || {}, off = s.ok === false, d = SITES[key];
+  return `<label class="platform ${off ? "off" : ""}"><input type="checkbox" name="src" value="${key}"
+    ${off ? "disabled" : d.off ? "" : "checked"}><span><b>${d.name}</b><small>${esc(off ? s.note : d.desc)}</small></span></label>`;
+}
+async function loadSources() {
+  state.sources = await api("/api/sources");
+  GROUPS.forEach((g) => { $(`#grp_${g}`).innerHTML = ofKind(g).map(siteBox).join(""); });
+  estimate();
+}
+function formState() {
+  const f = $("#searchForm");
+  const picked = (n) => [...f.querySelectorAll(`[name=${n}]:checked`)].map((x) => x.value);
+  const custom = f.custom.value.split(",").map((x) => x.trim()).filter(Boolean);
+  const roles = [...picked("role").map((r) => r.replace(" / ", " ")), ...custom];
+  const src = picked("src"), mode = (m) => src.filter((k) => SITES[k].mode === m);
+  return { f, roles, cities: picked("city"), byRole: mode("roles"),
+    perCity: mode("city"), funding: mode("funding") };
+}
+// One background search per kind of query: job-board searches run once per role; client posts,
+// city lists and funding news once per city.
+function plan() {
+  const { f, roles, cities, byRole, perCity, funding } = formState();
+  const common = { campaign: f.campaign.value, locations: cities.join("\n"), per_query: +f.per.value, days: f.days.value };
+  const runs = [];
+  if (byRole.length && roles.length) runs.push({ ...common, keywords: roles.join("\n"), sources: byRole });
+  if (perCity.length) runs.push({ ...common, keywords: "startups", sources: perCity });
+  if (funding.length) runs.push({ ...common, keywords: "startups", sources: funding,
+    days: Math.max(30, +f.days.value), auto_enrich: true });
+  const searches = runs.reduce((n, r) => n + r.sources.length * r.keywords.split("\n").length * cities.length, 0);
+  return { runs, searches, cities };
+}
+function estimate() {
+  const { searches, cities } = plan();
+  $("#estimate").textContent = !cities.length ? "Pick at least one city"
+    : !searches ? "Pick at least one site (and a role for job-board searches)"
+    : `${searches} searches \u00b7 about ${Math.max(1, Math.round(searches * 0.4))} min`;
+}
+$("#searchForm").addEventListener("input", estimate);
+$("#searchForm").addEventListener("change", estimate);
+
+async function startSearch(body) {
+  return api("/api/search", { method: "POST", body: { per_query: 25, days: 30, ...body } });
+}
+$("#searchForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const { runs, cities } = plan();
+  if (!cities.length) return toast("Pick at least one city");
+  if (!runs.length) return toast("Pick at least one site");
+  try {
+    let queries = 0;
+    for (const r of runs) queries += (await startSearch(r)).queries;
+    toast(`Search started \u2014 ${queries} searches. Results appear below as they're found.`);
+    $("#fCampaign").dataset.want = $("#searchForm").campaign.value;
+    loadRuns();
+  } catch (err) { toast(err.message); }
+});
+
+// ---------- running searches (India ones only)
+let runsSig = "";
+async function loadRuns() {
+  const jobs = (await api("/api/jobs")).filter((j) => (j.params || "").includes('"india_'));
+  const recent = jobs.filter((j) => j.status === "running" || j.status === "queued" ||
+    (j.finished_at && Date.now() / 1000 - j.finished_at < 1800)).slice(0, 5);
+  const sig = JSON.stringify(recent.map((j) => [j.id, j.status, j.done, j.added]));
+  if (sig !== runsSig) {
+    runsSig = sig;
+    $("#runsCard").hidden = !recent.length;
+    $("#runs").innerHTML = recent.map((j) => {
+      const pct = j.total ? Math.round((j.done / j.total) * 100) : 0;
+      const active = j.status === "running" || j.status === "queued";
+      const err = (j.log || "").split("\n").filter((x) => x.includes("ERROR")).pop();
+      return `<div class="run"><div class="info"><b>${esc(j.campaign || "Search")}</b>
+        <span class="state ${j.status}">${j.status === "done" ? "finished" : j.status}</span>
+        <div class="muted">${j.done}/${j.total} searches · <b>${j.added}</b> new results</div>
+        ${err ? `<div class="muted" title="${esc(err)}">⚠ ${esc(err.slice(11, 160))}</div>` : ""}
+        ${active ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}</div>
+        ${active ? `<button class="small" data-cancel="${j.id}">Stop</button>` : ""}</div>`;
+    }).join("");
+  }
+  return jobs;
+}
+$("#runs").addEventListener("click", async (e) => {
+  const id = e.target.dataset.cancel;
+  if (id) { await api(`/api/jobs/${id}/cancel`, { method: "POST" }); toast("Stopping…"); loadRuns(); }
+});
+
+// ---------- results
+function siteOptions() {
+  const keys = ofKind(state.tab);
+  $("#fSite").innerHTML = `<option value="">All sites</option>` +
+    keys.map((k) => `<option value="${k}">${SITES[k].name}</option>`).join("");
+  $("#fWithin").hidden = state.tab === "company";  // startup lists have no posted date
+  $("#enrichBtn").hidden = state.tab !== "company" && state.tab !== "funded";
+}
+function filters() {
+  return { q: $("#q").value.trim(), city: $("#fCity").value, status: $("#fStatus").value,
+    source: $("#fSite").value || tabSources(state.tab).join(","), campaign: $("#fCampaign").value,
+    within: state.tab === "company" ? "" : $("#fWithin").value };
+}
+async function loadStats() {
+  const s = await api("/api/stats");
+  const count = async (tab) => (await api(`/api/leads?${qs({ source: tabSources(tab).join(","), per_page: 10 })}`)).total;
+  const n = Object.fromEntries(await Promise.all(TABS.map(async ([k]) => [k, await count(k)])));
+  $("#stats").innerHTML = `<b>${n.job.toLocaleString()}</b> jobs \u00b7 <b>${n.hiring.toLocaleString()}</b> posts \u00b7 <b>${(n.company + n.funded).toLocaleString()}</b> startups`;
+  $("#tabs").innerHTML = TABS.map(([k, label]) =>
+    `<button class="tab ${state.tab === k ? "on" : ""}" data-tab="${k}">${label}<span class="n">${n[k]}</span></button>`).join("");
+  const sel = $("#fCampaign"), cur = sel.dataset.want || sel.value;
+  sel.innerHTML = `<option value="">All searches</option>` +
+    s.campaigns
+      .map((c) => `<option ${c === cur ? "selected" : ""}>${esc(c)}</option>`).join("");
+  if (sel.dataset.want && sel.value === sel.dataset.want) { delete sel.dataset.want; loadLeads(); }
+}
+$("#tabs").addEventListener("click", (e) => {
+  const t = e.target.closest("[data-tab]"); if (!t) return;
+  state.tab = t.dataset.tab; state.page = 1; siteOptions(); loadStats(); loadLeads();
+});
+
+const statusSel = (l) => `<select class="status" aria-label="Status">${STATUSES.map((s) =>
+  `<option ${s === l.status ? "selected" : ""}>${s}</option>`).join("")}</select>`;
+const link = (href, label) => href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${label}</a>` : "";
+function siteTag(l) {
+  const d = SITES[l.source];
+  if (d) return `<span class="tag ${d.tag}">${d.name}</span>`;
+  const m = l.signal.match(/\((Naukri|Linkedin)\)|on (Wellfound)|^(YC)/);  // legacy combined sources
+  const name = m ? (m[1] || m[2] || m[3]) : "India";
+  const cls = { Naukri: "naukri", Linkedin: "li", Wellfound: "wellfound", YC: "yc" }[name] || "";
+  return `<span class="tag ${cls}">${name === "Linkedin" ? "LinkedIn" : name}</span>`;
+}
+function jobHTML(l) {
+  const city = cityOf(l);
+  return `<div class="lead" data-id="${l.id}">
+    <div>
+      <div class="who">${siteTag(l)}<b>${esc(l.company)}</b>
+        ${city ? `<span class="city">${city}</span>` : ""}
+        ${l.budget ? `<span class="badge">${esc(pay(l.budget))}</span>` : ""}
+        <span class="muted">${esc(ago(l.posted_at))}</span></div>
+      <h3>${esc(l.title || l.name)}</h3>
+      ${l.snippet ? `<p title="${esc(l.snippet)}">${esc(l.snippet)}</p>` : ""}
+      ${l.email ? `<div class="email">✉ ${l.email.split(", ").map((e) => `<a href="mailto:${esc(e)}">${esc(e)}</a>`).join(", ")}</div>` : ""}
+    </div>
+    <div class="actions">${link(l.url, "Apply")}${link(l.website, "Website")}${statusSel(l)}</div>
+  </div>`;
+}
+function startupHTML(l) {
+  const city = cityOf(l);
+  const open = (l.signal.match(/(\d+) open jobs/) || [])[1];
+  const yc = (l.signal.match(/^YC (\w+)/) || [])[1];
+  return `<div class="lead" data-id="${l.id}">
+    <div>
+      <div class="who">${siteTag(l)}${city ? `<span class="city">${city}</span>` : ""}
+        ${l.size ? `<span class="badge">${esc(l.size)} people</span>` : ""}
+        ${yc ? `<span class="badge">YC ${esc(yc)}</span>` : ""}
+        ${open ? `<span class="muted">${open} open jobs</span>` : ""}</div>
+      <h3>${esc(l.name)}</h3>
+      ${l.snippet ? `<p title="${esc(l.snippet)}">${esc(l.snippet)}</p>` : ""}
+      ${l.email ? `<div class="email">✉ ${l.email.split(", ").map((e) => `<a href="mailto:${esc(e)}">${esc(e)}</a>`).join(", ")}</div>` : ""}
+    </div>
+    <div class="actions">${link(l.url, "Open jobs")}${link(l.website, "Website")}
+      <button type="button" data-findjobs="${esc(l.company)}" data-city="${city}">Find jobs here</button>
+      ${statusSel(l)}</div>
+  </div>`;
+}
+const emails = (l) => l.email ? `<div class="email">\u2709 ${l.email.split(", ").map((e) => `<a href="mailto:${esc(e)}">${esc(e)}</a>`).join(", ")}</div>` : "";
+function hiringHTML(l) {
+  const city = cityOf(l);
+  return `<div class="lead" data-id="${l.id}">
+    <div>
+      <div class="who">${siteTag(l)}<b>${esc(l.name)}</b>
+        ${l.company ? `<span class="muted">${esc(l.company)}</span>` : ""}
+        ${city ? `<span class="city">${city}</span>` : ""}
+        <span class="muted">${esc(ago(l.posted_at))}</span></div>
+      <h3>${esc(l.title || l.name)}</h3>
+      ${l.snippet && l.snippet !== l.title ? `<p title="${esc(l.snippet)}">${esc(l.snippet)}</p>` : ""}
+      ${emails(l)}
+    </div>
+    <div class="actions">${link(l.url, "Open post")}${link(l.profile, "Message")}${statusSel(l)}</div>
+  </div>`;
+}
+function fundedHTML(l) {
+  const city = cityOf(l);
+  return `<div class="lead" data-id="${l.id}">
+    <div>
+      <div class="who">${siteTag(l)}${city ? `<span class="city">${city}</span>` : ""}
+        ${l.funding ? `<span class="badge">${esc(l.funding)}</span>` : ""}
+        ${l.size ? `<span class="muted">${esc(l.size)} people</span>` : ""}
+        <span class="muted">${esc(ago(l.posted_at))}</span></div>
+      <h3>${esc(l.name)} raised ${esc(l.funding || "funding")}</h3>
+      <p title="${esc(l.signal)}">${esc(l.signal)}</p>
+      ${l.people ? `<div class="people">${esc(l.people)}</div>` : ""}
+      ${emails(l)}
+    </div>
+    <div class="actions">${link(l.url, "Article")}${link(l.website, "Website")}${link(l.linkedin, "LinkedIn")}
+      <button type="button" data-findjobs="${esc(l.company)}" data-city="${city}">Find jobs here</button>
+      ${statusSel(l)}</div>
+  </div>`;
+}
+const RENDER = { job: jobHTML, hiring: hiringHTML, company: startupHTML, funded: fundedHTML };
+async function loadLeads() {
+  const d = await api(`/api/leads?${qs({ ...filters(), page: state.page, per_page: state.perPage })}`);
+  const render = RENDER[state.tab];
+  $("#leads").innerHTML = d.leads.length ? d.leads.map(render).join("")
+    : `<div class="empty">${state.tab !== "company" && $("#fWithin").value
+        ? "Nothing in this time window \u2014 try a longer one or start a search above."
+        : "Nothing here yet — start a search above."}</div>`;
+  const pages = Math.max(1, Math.ceil(d.total / d.per_page));
+  $("#pager").innerHTML = d.total > d.per_page ? `<span class="muted">Page ${d.page} of ${pages} · ${d.total.toLocaleString()} results</span>
+    <span><button class="small" id="prev" ${d.page <= 1 ? "disabled" : ""}>← Prev</button>
+    <button class="small" id="next" ${d.page >= pages ? "disabled" : ""}>Next →</button></span>` : "";
+}
+$("#pager").addEventListener("click", (e) => {
+  if (e.target.id === "prev") state.page--; else if (e.target.id === "next") state.page++; else return;
+  loadLeads(); window.scrollTo({ top: $("#tabs").offsetTop - 20, behavior: "smooth" });
+});
+$("#leads").addEventListener("change", async (e) => {
+  if (!e.target.classList.contains("status")) return;
+  const id = e.target.closest(".lead").dataset.id;
+  await api(`/api/leads/${id}`, { method: "PATCH", body: { status: e.target.value } });
+  toast(`Marked as ${e.target.value}`); loadLeads();
+});
+$("#leads").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-findjobs]"); if (!b) return;
+  const name = b.dataset.findjobs, campaign = `${name} jobs`;
+  const sources = ["india_naukri", "india_linkedin"].filter((k) => (state.sources[k] || {}).ok !== false);
+  if (!sources.length) return toast("Install python-jobspy to search Naukri / LinkedIn");
+  try {
+    await startSearch({ campaign, keywords: `company:${name}`, locations: b.dataset.city || CITIES.join("\n"), sources });
+    toast(`Looking for jobs at ${name}…`);
+    state.tab = "job"; state.page = 1; siteOptions();
+    $("#fWithin").value = ""; $("#fCity").value = ""; $("#fCampaign").dataset.want = campaign;
+    loadRuns(); loadStats(); loadLeads();
+  } catch (err) { toast(err.message); }
+});
+let qTimer;
+$("#q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.page = 1; loadLeads(); }, 250); });
+["#fCity", "#fSite", "#fStatus", "#fWithin", "#fCampaign"].forEach((s) => $(s).addEventListener("change", () => { state.page = 1; loadLeads(); }));
+$("#exportBtn").onclick = () => { location.href = `/api/export.csv?${qs(filters())}`; };
+$("#enrichBtn").onclick = async () => {
+  const f = filters();
+  await api("/api/enrich", { method: "POST", body: { source: f.source, campaign: f.campaign } });
+  toast("Checking startup websites for emails and phone numbers…"); loadRuns();
+};
+
+let wasActive = false;
+async function tick() {
+  try {
+    const jobs = await loadRuns();
+    const active = jobs.some((j) => j.status === "running" || j.status === "queued");
+    if (active || wasActive) { await loadStats(); await loadLeads(); }
+    wasActive = active;
+  } finally { setTimeout(tick, 4000); }
+}
+siteOptions();
+loadSources().then(loadStats).then(loadLeads);
+tick();
+</script>
+</body>
+</html>

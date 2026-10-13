@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead Finder</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #fff; --ink: #16181d; --muted: #6b7280; --line: #e5e7eb;
+  --accent: #2563eb; --soft: #eef2ff; --ok: #059669; --bad: #dc2626;
+  --reddit: #ff4500; --x: #111; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1115; --panel: #171a21; --ink: #e8eaed; --muted: #9aa0aa; --line: #2a2f39;
+    --accent: #5b8cff; --soft: #1e2638; --x: #e8eaed; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  background: var(--bg); color: var(--ink); }
+.wrap { max-width: 980px; margin: 0 auto; padding: 24px 16px 60px; }
+header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+header h1 { font-size: 22px; margin: 0; letter-spacing: -.02em; }
+.stats { color: var(--muted); font-size: 14px; }
+.stats b { color: var(--ink); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+.step { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 10px; }
+.step + .step, .block + .step { margin-top: 22px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; pointer-events: none; }
+.chip span { display: inline-block; padding: 8px 14px; border: 1px solid var(--line); border-radius: 99px;
+  cursor: pointer; user-select: none; font-weight: 500; }
+.chip input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip input:disabled + span { opacity: .4; cursor: default; }
+input[type=text], input[type=search], input[type=number], select {
+  font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 9px; padding: 8px 11px; }
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.full { width: 100%; }
+.platforms { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.platform { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 10px; cursor: pointer; }
+.platform:has(input:checked) { border-color: var(--accent); background: var(--soft); }
+.platform small { display: block; color: var(--muted); }
+.platform.off { opacity: .5; cursor: default; }
+details.more { margin-top: 14px; }
+details.more summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+details.more .platforms { margin-top: 10px; }
+.go { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 22px; }
+button { font: inherit; font-weight: 600; border: 1px solid var(--line); background: var(--panel);
+  color: var(--ink); border-radius: 9px; padding: 8px 14px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); padding: 11px 22px; font-size: 16px; }
+button.small { padding: 5px 10px; font-size: 13px; }
+button:disabled { opacity: .5; cursor: default; }
+.muted { color: var(--muted); font-size: 14px; }
+.run { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.run:first-child { border-top: 0; }
+.run .info { flex: 1; min-width: 0; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+.bar i { display: block; height: 100%; background: var(--accent); transition: width .4s; }
+.state { font-size: 12px; font-weight: 700; }
+.state.done { color: var(--ok); } .state.running, .state.queued { color: var(--accent); }
+.state.failed, .state.cancelled, .state.interrupted { color: var(--bad); }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+.tab { border: 0; background: none; border-radius: 0; padding: 8px 12px; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.on { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .n { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.filters input[type=search] { flex: 1 1 200px; }
+.lead { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; padding: 14px 0; border-top: 1px solid var(--line); }
+.lead:first-child { border-top: 0; }
+.lead .who { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.tag { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 99px; color: #fff; background: var(--muted); }
+.tag.reddit { background: var(--reddit); }
+.tag.x { background: var(--x); color: var(--panel); }
+.tag.li { background: #0a66c2; }
+.lead h3 { font-size: 15.5px; margin: 2px 0; font-weight: 600; }
+.lead p { margin: 0; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden; }
+.lead .actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 130px; }
+.lead .actions a { text-align: center; font-weight: 600; font-size: 13px; text-decoration: none; color: var(--accent);
+  border: 1px solid var(--line); border-radius: 9px; padding: 5px 10px; }
+.lead .actions a:hover { border-color: var(--accent); }
+.lead .actions select { font-size: 13px; padding: 5px 8px; }
+.lead .email a { color: var(--accent); }
+.badge { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: #dcfce7; color: #166534; }
+@media (prefers-color-scheme: dark) { .badge { background: #14532d; color: #bbf7d0; } }
+@media (max-width: 600px) { .lead { grid-template-columns: 1fr; } .lead .actions { flex-direction: row; flex-wrap: wrap; } }
+.pager { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.empty { padding: 30px; text-align: center; color: var(--muted); }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg);
+  padding: 10px 16px; border-radius: 9px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Lead Finder</h1>
+    <div style="display:flex;gap:14px;align-items:baseline;flex-wrap:wrap"><div class="stats" id="stats"></div>
+      <a href="/india" style="color:var(--accent);font-weight:600;font-size:14px;text-decoration:none">India jobs →</a></div>
+  </header>
+
+  <!-- 1. Start a campaign -->
+  <form class="card" id="campaignForm">
+    <p class="step">1 · What work do you want?</p>
+    <div class="chips" id="skills"></div>
+    <div class="block" style="margin-top:10px">
+      <input type="text" class="full" name="custom" placeholder="Anything else? e.g. React, Flutter, landing page (separate with commas)">
+    </div>
+
+    <p class="step">2 · Where to look</p>
+    <div class="platforms" id="mainPlatforms"></div>
+    <div style="margin-top:12px" class="muted">Only posts from the last
+      <select name="days" id="days">
+        <option value="1">24 hours</option><option value="3">3 days</option>
+        <option value="7" selected>7 days</option><option value="30">30 days</option>
+      </select></div>
+    <details class="more">
+      <summary>More sources</summary>
+      <div class="platforms" id="morePlatforms"></div>
+    </details>
+
+    <p class="step">3 · Name it</p>
+    <input type="text" class="full" name="campaign" id="campaignName">
+
+    <div class="go">
+      <button class="primary" type="submit">Find people who want to hire</button>
+      <span class="muted" id="estimate"></span>
+    </div>
+  </form>
+
+  <!-- Running / recent campaigns -->
+  <div class="card" id="runsCard" hidden>
+    <p class="step">Campaigns running</p>
+    <div id="runs"></div>
+  </div>
+
+  <!-- 2. Leads -->
+  <div class="card">
+    <div class="tabs" id="tabs"></div>
+    <div class="filters">
+      <input type="search" id="q" placeholder="Search posts, names, emails…">
+      <select id="fPlatform">
+        <option value="">All platforms</option>
+        <option value="reddit_hiring">Reddit</option>
+        <option value="twitter">X / Twitter</option>
+        <option value="linkedin_posts">LinkedIn posts</option>
+        <option value="linkedin_jobs">LinkedIn jobs</option>
+        <option value="freelancer">Freelancer.com</option>
+        <option value="upwork">Upwork</option>
+        <option value="hn_contract">Hacker News</option>
+        <option value="funding_news">Funded startups</option>
+      </select>
+      <select id="fWithin" aria-label="Posted within">
+        <option value="1">Last 24 hours</option><option value="3">Last 3 days</option>
+        <option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option>
+        <option value="">Any time</option>
+      </select>
+      <select id="fCampaign"><option value="">All campaigns</option></select>
+      <button id="exportBtn" type="button">Export CSV</button>
+    </div>
+    <div id="leads"></div>
+    <div class="pager" id="pager"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SKILLS = ["Website", "Mobile app", "Web app", "Shopify", "WordPress", "AI chatbot", "Automation", "MVP / SaaS", "Bug fixing"];
+const DEFAULT_SKILLS = ["Website", "Mobile app", "Web app"];
+// Phrases people use when they want to hire. Always searched, on top of the chosen skills.
+const INTENT = ['"looking for a developer"', '"need a developer"', '"need someone to build"', '"hire a freelance developer"'];
+const MAIN = {
+  reddit_hiring: ["Reddit", "r/forhire, r/slavelabour, r/startups, r/SaaS + 11 more"],
+  twitter: ["X / Twitter", "Tweets asking for a developer"],
+  linkedin_posts: ["LinkedIn posts", "\u201cHiring a freelance developer\u201d posts"],
+  linkedin_jobs: ["LinkedIn jobs", "Contract & part-time, needs LinkedIn login"],
+};
+const MORE = {
+  freelancer: ["Freelancer.com", "Paid projects, no login"],
+  upwork: ["Upwork", "Needs Upwork login in Chrome"],
+  hn_contract: ["Hacker News", "Contract jobs"],
+  funding_news: ["Funded startups", "Funding news"],
+};
+const TABS = [["new", "New"], ["contacted", "Contacted"], ["replied", "Replied"], ["won", "Won"], ["", "All"]];
+const STATUSES = ["new", "contacted", "replied", "qualified", "won", "rejected"];
+const PLATFORM = { reddit_hiring: ["Reddit", "reddit"], reddit: ["Reddit", "reddit"], twitter: ["X", "x"],
+  freelancer: ["Freelancer.com", ""], upwork: ["Upwork", ""], hn_contract: ["Hacker News", ""],
+  funding_news: ["Funded", ""], funding_feeds: ["Funded", ""],
+  linkedin_posts: ["LinkedIn", "li"], linkedin_jobs: ["LinkedIn job", "li"],
+  india_jobs: ["India job", ""], india_startups: ["India startup", ""] };
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const state = { tab: "new", page: 1, perPage: 50, sources: {} };
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2800);
+}
+async function api(path, opts = {}) {
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+const qs = (o) => new URLSearchParams(Object.entries(o).filter(([, v]) => v !== "" && v != null)).toString();
+const ago = (d) => {
+  const t = new Date(d); if (isNaN(t)) return "";
+  const h = (Date.now() - t) / 36e5;
+  return h < 1 ? "just now" : h < 24 ? `${Math.round(h)}h ago` : `${Math.round(h / 24)}d ago`;
+};
+
+// ---------- campaign form
+$("#skills").innerHTML = SKILLS.map((s) =>
+  `<label class="chip"><input type="checkbox" name="skill" value="${s}" ${DEFAULT_SKILLS.includes(s) ? "checked" : ""}><span>${s}</span></label>`).join("");
+$("#campaignName").value = `Hiring posts ${new Date().toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+
+function platformBox(key, [name, desc], checked) {
+  const s = state.sources[key] || {};
+  const off = s.ok === false;
+  return `<label class="platform ${off ? "off" : ""}"><input type="checkbox" name="src" value="${key}"
+    ${checked && !off ? "checked" : ""} ${off ? "disabled" : ""}><span><b>${name}</b>
+    <small>${esc(off ? s.note : desc)}</small></span></label>`;
+}
+async function loadSources() {
+  state.sources = await api("/api/sources");
+  $("#mainPlatforms").innerHTML = Object.entries(MAIN).map(([k, v]) => platformBox(k, v, true)).join("");
+  $("#morePlatforms").innerHTML = Object.entries(MORE).map(([k, v]) => platformBox(k, v, false)).join("");
+  estimate();
+}
+function formKeywords() {
+  const f = $("#campaignForm");
+  const skills = [...f.querySelectorAll("[name=skill]:checked")].map((x) => x.value.replace(" / ", " "));
+  const custom = f.custom.value.split(",").map((x) => x.trim()).filter(Boolean);
+  return [...INTENT, ...skills, ...custom];
+}
+function estimate() {
+  const n = $("#campaignForm").querySelectorAll("[name=src]:checked").length;
+  const kw = formKeywords().length;
+  $("#estimate").textContent = n ? `${kw} searches on ${n} platform${n > 1 ? "s" : ""} · about ${Math.max(2, Math.round(kw * n * 0.6))} min` : "Pick at least one platform";
+}
+$("#campaignForm").addEventListener("input", estimate);
+$("#campaignForm").addEventListener("change", estimate);
+$("#campaignForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const sources = [...f.querySelectorAll("[name=src]:checked")].map((x) => x.value);
+  let keywords = formKeywords();
+  if (sources.includes("funding_news")) keywords = [...keywords, "startup raises seed round", "raises Series A"];
+  try {
+    const r = await api("/api/search", { method: "POST", body: {
+      campaign: f.campaign.value, keywords: keywords.join("\n"), locations: "",
+      sources, per_query: 100, days: f.days.value, auto_enrich: sources.includes("funding_news") } });
+    toast(`Campaign started — ${r.queries} searches. Leads appear below as they're found.`);
+    $("#fCampaign").dataset.want = f.campaign.value;
+    loadRuns();
+  } catch (err) { toast(err.message); }
+});
+
+// ---------- running campaigns
+let runsSig = "";
+async function loadRuns() {
+  const jobs = await api("/api/jobs");
+  const recent = jobs.filter((j) => j.status === "running" || j.status === "queued" ||
+    (j.finished_at && Date.now() / 1000 - j.finished_at < 1800)).slice(0, 5);
+  const sig = JSON.stringify(recent.map((j) => [j.id, j.status, j.done, j.added]));
+  if (sig !== runsSig) {
+    runsSig = sig;
+    $("#runsCard").hidden = !recent.length;
+    $("#runs").innerHTML = recent.map((j) => {
+      const pct = j.total ? Math.round((j.done / j.total) * 100) : 0;
+      const active = j.status === "running" || j.status === "queued";
+      return `<div class="run"><div class="info"><b>${esc(j.campaign || "Campaign")}</b>
+        <span class="state ${j.status}">${j.status === "done" ? "finished" : j.status}</span>
+        <div class="muted">${j.done}/${j.total} searches · <b>${j.added}</b> new leads</div>
+        ${active ? `<div class="bar"><i style="width:${pct}%"></i></div>` : ""}</div>
+        ${active ? `<button class="small" data-cancel="${j.id}">Stop</button>` : ""}</div>`;
+    }).join("");
+  }
+  return jobs;
+}
+$("#runs").addEventListener("click", async (e) => {
+  const id = e.target.dataset.cancel;
+  if (id) { await api(`/api/jobs/${id}/cancel`, { method: "POST" }); toast("Stopping…"); loadRuns(); }
+});
+
+// ---------- leads
+function filters() {
+  return { q: $("#q").value.trim(), source: $("#fPlatform").value, campaign: $("#fCampaign").value,
+    status: state.tab, within: $("#fWithin").value };
+}
+async function loadStats() {
+  const s = await api("/api/stats");
+  $("#stats").innerHTML = `<b>${s.total.toLocaleString()}</b> leads · <b>${s.with_email.toLocaleString()}</b> with email · <b>${s.by_status.won || 0}</b> won`;
+  $("#tabs").innerHTML = TABS.map(([k, label]) =>
+    `<button class="tab ${state.tab === k ? "on" : ""}" data-tab="${k}">${label}<span class="n">${k ? (s.by_status[k] || 0) : s.total}</span></button>`).join("");
+  const sel = $("#fCampaign"), cur = sel.dataset.want || sel.value;
+  sel.innerHTML = `<option value="">All campaigns</option>` +
+    s.campaigns.map((c) => `<option ${c === cur ? "selected" : ""}>${esc(c)}</option>`).join("");
+  if (sel.dataset.want && sel.value === sel.dataset.want) { delete sel.dataset.want; loadLeads(); }
+}
+$("#tabs").addEventListener("click", (e) => {
+  const t = e.target.closest("[data-tab]"); if (!t) return;
+  state.tab = t.dataset.tab; state.page = 1; loadStats(); loadLeads();
+});
+
+function leadHTML(l) {
+  const [pname, pcls] = PLATFORM[l.source] || [l.source, ""];
+  const who = l.name && l.name !== l.title ? l.name : "";
+  const where = l.company && l.company !== l.name ? l.company : "";
+  const heading = l.kind === "funded" ? `${l.name} raised ${l.funding || "funding"}` : (l.title || l.name);
+  const body = l.kind === "funded" ? l.signal : l.snippet;
+  const links = [];
+  if (l.url) links.push(`<a href="${esc(l.url)}" target="_blank" rel="noopener">Open post</a>`);
+  if (l.profile) links.push(`<a href="${esc(l.profile)}" target="_blank" rel="noopener">${pcls ? "Message" : "Profile"}</a>`);
+  if (l.website) links.push(`<a href="${esc(l.website)}" target="_blank" rel="noopener">Website</a>`);
+  return `<div class="lead" data-id="${l.id}">
+    <div>
+      <div class="who"><span class="tag ${pcls}">${esc(pname)}</span>
+        ${who ? `<b>${esc(who)}</b>` : ""}${where ? `<span class="muted">${esc(where)}</span>` : ""}
+        ${l.budget ? `<span class="badge">${esc(l.budget)}</span>` : ""}
+        <span class="muted">${esc(ago(l.posted_at))}</span></div>
+      <h3>${esc(heading)}</h3>
+      ${body && body !== heading ? `<p title="${esc(body)}">${esc(body)}</p>` : ""}
+      ${l.email ? `<div class="email">✉ ${l.email.split(", ").map((e) => `<a href="mailto:${esc(e)}">${esc(e)}</a>`).join(", ")}</div>` : ""}
+    </div>
+    <div class="actions">${links.join("")}
+      <select class="status" aria-label="Status">${STATUSES.map((s) => `<option ${s === l.status ? "selected" : ""}>${s}</option>`).join("")}</select>
+    </div>
+  </div>`;
+}
+async function loadLeads() {
+  const d = await api(`/api/leads?${qs({ ...filters(), page: state.page, per_page: state.perPage })}`);
+  $("#leads").innerHTML = d.leads.length ? d.leads.map(leadHTML).join("")
+    : `<div class="empty">${$("#fWithin").value ? "No leads posted in this time window — try a longer one or start a campaign above." : "Nothing here yet — start a campaign above."}</div>`;
+  const pages = Math.max(1, Math.ceil(d.total / d.per_page));
+  $("#pager").innerHTML = d.total > d.per_page ? `<span class="muted">Page ${d.page} of ${pages} · ${d.total.toLocaleString()} leads</span>
+    <span><button class="small" id="prev" ${d.page <= 1 ? "disabled" : ""}>← Prev</button>
+    <button class="small" id="next" ${d.page >= pages ? "disabled" : ""}>Next →</button></span>` : "";
+}
+$("#pager").addEventListener("click", (e) => {
+  if (e.target.id === "prev") state.page--; else if (e.target.id === "next") state.page++; else return;
+  loadLeads(); window.scrollTo({ top: $("#tabs").offsetTop - 20, behavior: "smooth" });
+});
+$("#leads").addEventListener("change", async (e) => {
+  if (!e.target.classList.contains("status")) return;
+  const id = e.target.closest(".lead").dataset.id;
+  await api(`/api/leads/${id}`, { method: "PATCH", body: { status: e.target.value } });
+  toast(`Marked as ${e.target.value}`); loadStats(); loadLeads();
+});
+let qTimer;
+$("#q").addEventListener("input", () => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.page = 1; loadLeads(); }, 250); });
+["#fPlatform", "#fCampaign", "#fWithin"].forEach((s) => $(s).addEventListener("change", () => { state.page = 1; loadLeads(); }));
+$("#exportBtn").onclick = () => { location.href = `/api/export.csv?${qs(filters())}`; };
+
+let wasActive = false;
+async function tick() {
+  try {
+    const jobs = await loadRuns();
+    const active = jobs.some((j) => j.status === "running" || j.status === "queued");
+    if (active || wasActive) { await loadStats(); await loadLeads(); }
+    wasActive = active;
+  } finally { setTimeout(tick, 4000); }
+}
+loadSources().then(loadStats).then(loadLeads);
+tick();
+</script>
+</body>
+</html>
