@@ -1,6 +1,6 @@
 # 职场招聘
 
-LinkedIn、Boss直聘。
+LinkedIn、Boss直聘、印度求职（Chennai/Noida/Gurugram + 创业公司）。
 
 ## LinkedIn
 
@@ -182,3 +182,71 @@ boss --browser-source existing-browser --cdp-url http://localhost:9222 search "�
 > **等待属预期，不是卡死**：连续搜索命中节流时，boss-agent-cli 会静默等待 5–10 秒
 > （TTY 下会显示「节流等待 Ns…」提示；Agent Reach 以 `--json` 调用，看不到该提示）。
 > 等待窗口内不要重试、不要拉起新浏览器、不要切换 profile。
+
+## 印度求职（Chennai / Noida / Gurugram + 创业公司）
+
+用户要找 Chennai、Noida、Gurugram（Gurgaon）的岗位，或「这些城市里在招人的创业公司」时用本节。
+两条腿走路：**岗位**走 python-jobspy（Naukri + LinkedIn），**创业公司**走 Jina Reader 读
+Wellfound / YC 城市页。先跑 `agent-reach doctor` 看 india_jobs 行：`ok` 会给出装了
+jobspy 的 Python 路径（下文 `$PY`）；`warn` 表示只有 Jina Reader，可运行
+`agent-reach install --channels=india_jobs` 安装。
+
+### 岗位搜索（python-jobspy）
+
+```bash
+$PY - <<'PY'
+import pandas as pd
+from jobspy import scrape_jobs
+
+QUERY = "backend engineer"
+CITIES = {"Chennai": ["chennai"], "Noida": ["noida"], "Gurugram": ["gurugram", "gurgaon"]}
+
+frames = []
+for city, keys in CITIES.items():
+    df = scrape_jobs(
+        site_name=["naukri", "linkedin"],
+        search_term=QUERY,
+        location=city,
+        results_wanted=15,
+        hours_old=168,
+    )
+    # LinkedIn 会混入同城圈邻近城市（Noida 搜出 Gurugram/Delhi），按地名过滤
+    df = df[df["location"].fillna("").str.lower().str.contains("|".join(keys))]
+    frames.append(df.assign(city=city))
+
+jobs = pd.concat(frames).drop_duplicates(subset=["city", "title", "company"])
+cols = ["city", "site", "title", "company", "date_posted", "job_url"]
+print(jobs[cols].to_string(index=False))
+PY
+```
+
+坑（2026-10 实测）：
+- **Naukri 同一岗位多条 URL**：按 `job_url` 去重不够，要按 `city+title+company` 去重。
+- **Indeed India 不加进默认组合**：它的 location 只给邦缩写（`UP, India` / `DL, India`），
+  按城市过滤后为空；确需 Indeed 时加 `"indeed"` + `country_indeed="India"` 并改按邦过滤。
+- **`company_num_employees` 对 Naukri/LinkedIn 为空**，不能用它筛创业公司——用下面的城市页。
+- JD 全文：`scrape_jobs(..., linkedin_fetch_description=True)`，或 `curl -s "https://r.jina.ai/<job_url>"`。
+
+### 在招的创业公司（Jina Reader，零配置）
+
+```bash
+# Wellfound：城市创业公司列表（含规模、阶段、在招岗位链接），翻页加 ?page=2
+curl -s "https://r.jina.ai/https://wellfound.com/startups/location/madras"    # Chennai
+curl -s "https://r.jina.ai/https://wellfound.com/startups/location/noida"     # Noida
+curl -s "https://r.jina.ai/https://wellfound.com/startups/location/gurgaon"   # Gurugram（必须用 gurgaon）
+
+# YC 投资的创业公司在当地的岗位
+curl -s "https://r.jina.ai/https://www.ycombinator.com/jobs/location/noida"
+curl -s "https://r.jina.ai/https://www.ycombinator.com/jobs/location/gurugram"
+```
+
+> **Chennai 在 Wellfound 的 slug 是 `madras`**：`/startups/location/chennai` 不报错，
+> 但会静默回退成全球 1 万+ 家公司的列表（标题变成 "Best Tech Companies and Startups
+> to Work for"）。读完先核对标题里有没有城市名。YC 目前没有 Chennai 城市页（同样静默
+> 回退），Chennai 只用 Wellfound + 上面的 jobspy 搜索。
+> Wellfound 的 `/role/l/<role>/<city>` 页面同样会忽略城市，别用。
+> **Gurugram 在 Wellfound 必须用旧名 `gurgaon`**：`/startups/location/gurugram` 标题正确但
+> 「0 results total」。读完核对结果数，0 条就换旧地名。
+
+组合打法：先从城市页拿创业公司名单，再把公司名作为 `search_term`（或 `"<公司名> <岗位>"`）
+丢给上面的 jobspy 脚本，或直接读 `https://r.jina.ai/https://wellfound.com/company/<slug>/jobs`。

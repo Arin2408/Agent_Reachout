@@ -102,7 +102,8 @@ def main():
     p_install.add_argument("--channels", default="",
                            help="Comma-separated optional channels to install "
                                 "(twitter,xiaoyuzhou,xueqiu,xiaohongshu,"
-                                "reddit,facebook,instagram,bilibili,linkedin,boss,all)")
+                                "reddit,facebook,instagram,bilibili,linkedin,boss,"
+                                "india_jobs,all)")
 
     # ── configure ──
     p_conf = sub.add_parser("configure", help="Set a config value or auto-extract from browser")
@@ -280,6 +281,7 @@ def _cmd_install(args):
         "instagram":   _install_opencli_deps,
         "bilibili":    _install_bili_deps,
         "boss":        _install_boss_deps,
+        "india_jobs":  _install_india_jobs_deps,
         "opencli":     _install_opencli_deps,  # cross-channel backend, desktop only
         # xueqiu: cookie-only, no install step
         # linkedin: manual setup, no auto-install
@@ -1027,6 +1029,41 @@ def _install_boss_deps():
 
     print("  [!]  boss-agent-cli install failed. Install pipx or uv, then retry:")
     print(f"       pipx install --force '{_BOSS_AGENT_CLI_SOURCE}'")
+    return False
+
+
+def _install_india_jobs_deps():
+    """Install python-jobspy into Agent Reach's own interpreter.
+
+    JobSpy is a library, not a CLI, so pipx/uv tool cannot expose it; agents
+    call it with the same interpreter that doctor reports for this channel.
+    The Wellfound/YC startup pages need no install (Jina Reader).
+    """
+    import subprocess
+
+    print("Setting up India jobs (python-jobspy: Naukri/LinkedIn)...")
+    from agent_reach.channels.india_jobs import _jobspy_installed
+
+    if _jobspy_installed():
+        print("  ✅ python-jobspy already installed")
+        return True
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "python-jobspy"],
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=300,
+        )
+        if result.returncode == 0:
+            print(f"  ✅ python-jobspy installed for {sys.executable}")
+            return True
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+    print("  [!]  python-jobspy install failed. Retry manually:")
+    print(f"       {sys.executable} -m pip install python-jobspy")
+    print("  Wellfound/YC 创业公司城市页仍可通过 Jina Reader 读取")
     return False
 
 

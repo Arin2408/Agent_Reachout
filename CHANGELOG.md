@@ -8,6 +8,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### ✨ Features / 新功能
+
+- **印度求职 channel（`india_jobs`）**：按 Chennai / Noida / Gurugram 搜岗位（python-jobspy：
+  Naukri + LinkedIn），并经 Jina Reader 读 Wellfound / YC 城市页列出在当地招人的创业公司。
+  `agent-reach install --channels=india_jobs` 安装 jobspy；未安装时 doctor 报 warn，创业公司
+  列表仍零配置可用。平台数 16→17。
+
 ### 🐛 Bug Fixes / 修复
 
 #### 🔐 Boss直聘 — 登录态误判（双凭据存储）

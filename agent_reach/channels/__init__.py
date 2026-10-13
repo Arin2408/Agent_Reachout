@@ -12,6 +12,7 @@ from .boss import BossChannel
 from .exa_search import ExaSearchChannel
 from .facebook import FacebookChannel
 from .github import GitHubChannel
+from .india_jobs import IndiaJobsChannel
 from .instagram import InstagramChannel
 from .linkedin import LinkedInChannel
 from .reddit import RedditChannel
@@ -35,6 +36,7 @@ ALL_CHANNELS: List[Channel] = [
     XiaoHongShuChannel(),
     LinkedInChannel(),
     BossChannel(),
+    IndiaJobsChannel(),
     XiaoyuzhouChannel(),
     V2EXChannel(),
     XueqiuChannel(),
